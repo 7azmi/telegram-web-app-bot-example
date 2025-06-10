@@ -1,0 +1,54 @@
+/*
+ * Telegram Theme Styles
+ * Extracted from the official demo template.
+ */
+body {
+    background-color: var(--tg-theme-bg-color);
+    color: var(--tg-theme-text-color);
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+    color-scheme: var(--tg-color-scheme);
+}
+
+a {
+    color: var(--tg-theme-link-color);
+}
+
+button {
+    display: block;
+    width: 100%;
+    font-size: 14px;
+    margin: 15px 0;
+    padding: 12px 20px;
+    border: 1px solid var(--tg-theme-button-color);
+    border-radius: 8px;
+    background-color: var(--tg-theme-secondary-bg-color); /* Default unselected state */
+    color: var(--tg-theme-button-color);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* For elements like the dev info box */
+pre {
+    background: rgba(0, 0, 0, .07);
+    color: var(--tg-theme-text-color);
+    font-size: 12px;
+    border-radius: 4px;
+    padding: 8px;
+    word-break: break-word;
+    white-space: pre-wrap;
+    text-align: left;
+}
+
+.dark pre {
+    background: rgba(255, 255, 255, .15);
+}
+
+.hint {
+    color: var(--tg-theme-hint-color);
+}
