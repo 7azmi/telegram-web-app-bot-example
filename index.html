@@ -1,121 +1,137 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <title>Telegram Web App Contact Request Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debt Tracker</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: sans-serif;
-            padding: 20px;
-            background-color: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="number"],
-        input[type="text"],
-        select { /* Added select */
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid var(--tg-theme-border-color);
-            border-radius: 5px;
-            background-color: var(--tg-theme-secondary-bg-color);
-            color: var(--tg-theme-text-color);
-            box-sizing: border-box; /* Include padding in width */
-        }
-        input::placeholder {
-            color: var(--tg-theme-hint-color);
+            margin: 20px;
+            background-color: var(--tg-theme-bg-color, #ffffff); /* Use Web App theme colors */
+            color: var(--tg-theme-text-color, #000000);
         }
         button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
-            border: none;
-            border-radius: 5px;
+            padding: 10px 15px;
             font-size: 16px;
             cursor: pointer;
-            margin-top: 10px;
+            /* Use Web App theme colors for button */
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 5px;
         }
         button:disabled {
-            background-color: var(--tg-theme-hint-color);
             cursor: not-allowed;
+            opacity: 0.6;
         }
-        .person-selection {
-            margin-bottom: 15px;
-            border: 1px solid var(--tg-theme-border-color);
-            padding: 15px;
-            border-radius: 5px;
-            background-color: var(--tg-theme-secondary-bg-color);
-        }
-        .selection-type {
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .explanation {
+        #result {
             margin-top: 20px;
-            font-size: 0.9em;
-            color: var(--tg-theme-hint-color);
-        }
-        a {
-            color: var(--tg-theme-link-color); /* Style links */
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
+            padding: 10px;
+            border: 1px solid var(--tg-theme-secondary-bg-color, #f0f0f0); /* Use theme colors */
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            white-space: pre-wrap; /* Preserve formatting */
+            word-wrap: break-word; /* Prevent overflow */
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
 
-<h1>Record Debt</h1>
+<h1>Request Contact Info</h1>
 
-<form id="debtForm">
-    <div>
-        <label for="amount">Amount:</label>
-        <input type="number" id="amount" step="0.01" required placeholder="e.g., 50.50">
-    </div>
+<p>This demo requests your phone number using the Telegram Web App API.</p>
 
-    <div class="person-selection">
-        <div class="selection-type">Who is this debt with?</div>
+<button id="requestButton">Request My Phone Number</button>
 
-        <label for="knownPersonSelect">Select from known:</label>
-        <select id="knownPersonSelect">
-            <option value="">-- Select a person --</option>
-            <!-- Options will be loaded by script.js -->
-        </select>
+<div id="result">Status: Loading Telegram Web App script...</div>
 
-        <p style="text-align: center; margin: 10px 0; font-size: 0.9em;">OR</p>
+<!-- Include the Telegram Web App script -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-        <label for="manualPersonInput">Enter manually:</label>
-        <input type="text" id="manualPersonInput" placeholder="e.g., Alice, @alice_tg, 123-456-7890">
-    </div>
+<script>
+    const requestButton = document.getElementById('requestButton');
+    const resultDiv = document.getElementById('result');
 
-    <div>
-        <label for="description">Description:</label>
-        <input type="text" id="description" placeholder="e.g., Lunch, Money lent">
-    </div>
+    // Function to display status messages
+    function updateStatus(message) {
+        resultDiv.innerText = 'Status: ' + message;
+    }
 
-    <button type="submit" id="submitBtn">Record Debt</button>
+    // Wait for the Telegram Web App script to load and initialize
+    // The SDK attaches Telegram.WebApp to the window object
+    window.addEventListener('load', () => {
+        if (window.Telegram && window.Telegram.WebApp) {
+            const WebApp = window.Telegram.WebApp;
 
-    <div id="personLinkContainer" style="margin-top: 15px;">
-        <!-- Link to person's chat will appear here if a known Telegram user is selected -->
-    </div>
-</form>
+            // Signal that the Web App is ready to the Telegram client
+            WebApp.ready();
 
-<p class="explanation">
-    Enter a positive amount if you are owed, negative if you owe someone.<br>
-    Select a person from the list (if available) or type manually.
-</p>
+            // Apply theme parameters as CSS variables
+            // The SDK does this automatically, but good to know
+            // console.log('Theme Params:', WebApp.themeParams);
 
-<script src="script.js"></script>
+            updateStatus("Telegram Web App initialized. Version: " + WebApp.version + ". Platform: " + WebApp.platform + ".\nClick the button.");
+
+            // Check if the required version for requestContact is supported (v6.9+)
+            // The SDK code includes: if (!versionAtLeast('6.9')) { ... error ... }
+            // So we should check this explicitly before trying to call the method.
+            if (!WebApp.isVersionAtLeast('6.9')) {
+                updateStatus("Telegram Web App version " + WebApp.version + " does not support requesting contact info (requires 6.9 or higher). Button disabled.");
+                requestButton.disabled = true; // Disable the button if not supported
+            } else {
+                // Enable the button if the version is compatible
+                requestButton.disabled = false;
+
+                // Add click listener to the button
+                requestButton.addEventListener('click', () => {
+                    updateStatus("Requesting contact info...");
+                    requestButton.disabled = true; // Disable button while request is pending
+
+                    // Call the requestContact API
+                    WebApp.requestContact((requestSent, eventData) => {
+                        requestButton.disabled = false; // Re-enable button after response
+
+                        console.log("requestContact response:", { requestSent, eventData });
+
+                        if (requestSent) {
+                            // The SDK handles the internal polling. If requestSent is true,
+                            // it means the request was sent to the Telegram client.
+                            // If the user grants access, the callback is re-triggered with
+                            // the phone number in eventData.responseUnsafe.
+                            // If the user denies after the popup, status will reflect that.
+
+                            if (eventData && eventData.responseUnsafe && eventData.responseUnsafe.phone_number) {
+                                updateStatus("Contact Granted! Phone Number: " + eventData.responseUnsafe.phone_number);
+                            } else if (eventData && eventData.status) {
+                                // Handle cases like 'cancelled' or 'denied' after the popup
+                                updateStatus("Request Result: " + eventData.status);
+                            } else {
+                                updateStatus("Request Sent, but unknown response.");
+                            }
+
+                        } else {
+                            // requestSent is false, meaning the initial call failed or was cancelled.
+                            // This could happen if the user closes the Web App before responding,
+                            // or if there's an internal error.
+                            if (eventData && eventData.status) {
+                                updateStatus("Request Failed or Cancelled: " + eventData.status);
+                            } else {
+                                updateStatus("Request Failed or Cancelled (Unknown reason).");
+                            }
+                        }
+                    });
+                });
+            }
+
+
+        } else {
+            updateStatus("Telegram Web App script not loaded or not running in a Telegram client environment.");
+            requestButton.disabled = true; // Disable button if SDK is not available
+        }
+    });
+
+
+</script>
 
 </body>
 </html>
