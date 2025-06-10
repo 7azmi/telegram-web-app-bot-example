@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Telegram Web App Contact Request Demo</title>
+    <title>Telegram Web App Share Contact Guide</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
@@ -19,46 +19,67 @@
             color: var(--tg-theme-button-text-color, #ffffff);
             border: none;
             border-radius: 5px;
+            margin-top: 15px;
         }
         button:disabled {
             cursor: not-allowed;
             opacity: 0.6;
         }
-        #result {
+        #instructions {
             margin-top: 20px;
-            padding: 10px;
-            border: 1px solid var(--tg-theme-secondary-bg-color, #f0f0f0); /* Use theme colors */
+            padding: 15px;
+            border: 1px solid var(--tg-theme-hint-color, #a0a0a0); /* Use theme colors */
             background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
             white-space: pre-wrap; /* Preserve formatting */
             word-wrap: break-word; /* Prevent overflow */
             border-radius: 5px;
         }
+        #status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #a0a0a0);
+        }
     </style>
 </head>
 <body>
 
-<h1>Request Contact Info</h1>
+<h1>Share a Contact</h1>
 
-<p>This demo requests your phone number using the Telegram Web App API.</p>
+<p>To share a contact from your device's address book, you need to do this from the chat with the bot.</p>
 
-<button id="requestButton">Request My Phone Number</button>
+<div id="instructions">
+    Please click the button below to go back to the chat with our bot. Once in the chat:
+    <br><br>
+    1. Tap the **attachment icon** (📎).
+    <br>
+    2. Select **"Contact"**.
+    <br>
+    3. Choose the contact you wish to share.
+</div>
 
-<div id="result">Status: Loading Telegram Web App script...</div>
+<button id="goToChatButton" disabled>Go to Bot Chat</button>
+
+<div id="status">Status: Loading Telegram Web App script...</div>
 
 <!-- Include the Telegram Web App script -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <script>
-    const requestButton = document.getElementById('requestButton');
-    const resultDiv = document.getElementById('result');
+    const goToChatButton = document.getElementById('goToChatButton');
+    const instructionsDiv = document.getElementById('instructions');
+    const statusDiv = document.getElementById('status');
 
     // Function to display status messages
     function updateStatus(message) {
-        resultDiv.innerText = 'Status: ' + message;
+        statusDiv.innerText = 'Status: ' + message;
     }
 
-    // Wait for the Telegram Web App script to load and initialize
-    // The SDK attaches Telegram.WebApp to the window object
+    // *** IMPORTANT: Replace with your bot's username ***
+    // You might need to get this dynamically from initData if available,
+    // or pass it as a URL parameter when launching the Web App.
+    // For this demo, we'll use a placeholder.
+    const BOT_USERNAME = 'YOUR_BOT_USERNAME'; // <--- REPLACE THIS
+
     window.addEventListener('load', () => {
         if (window.Telegram && window.Telegram.WebApp) {
             const WebApp = window.Telegram.WebApp;
@@ -66,70 +87,40 @@
             // Signal that the Web App is ready to the Telegram client
             WebApp.ready();
 
-            // Apply theme parameters as CSS variables
-            // The SDK does this automatically, but good to know
-            // console.log('Theme Params:', WebApp.themeParams);
+            updateStatus("Telegram Web App initialized. Version: " + WebApp.version + ".\nClick the button to return to the chat.");
 
-            updateStatus("Telegram Web App initialized. Version: " + WebApp.version + ". Platform: " + WebApp.platform + ".\nClick the button.");
-
-            // Check if the required version for requestContact is supported (v6.9+)
-            // The SDK code includes: if (!versionAtLeast('6.9')) { ... error ... }
-            // So we should check this explicitly before trying to call the method.
-            if (!WebApp.isVersionAtLeast('6.9')) {
-                updateStatus("Telegram Web App version " + WebApp.version + " does not support requesting contact info (requires 6.9 or higher). Button disabled.");
-                requestButton.disabled = true; // Disable the button if not supported
-            } else {
-                // Enable the button if the version is compatible
-                requestButton.disabled = false;
+            // Check if the required version for openTelegramLink is supported (v6.1+)
+            if (!WebApp.isVersionAtLeast('6.1')) {
+                updateStatus("Telegram Web App version " + WebApp.version + " does not support opening Telegram links (requires 6.1 or higher). Button disabled.");
+                goToChatButton.disabled = true; // Disable the button if not supported
+            } else if (BOT_USERNAME === 'YOUR_BOT_USERNAME' || !BOT_USERNAME) {
+                updateStatus("Please replace 'YOUR_BOT_USERNAME' in the script with your actual bot's username. Button disabled.");
+                goToChatButton.disabled = true;
+            }
+            else {
+                // Enable the button if the version is compatible and username is set
+                goToChatButton.disabled = false;
 
                 // Add click listener to the button
-                requestButton.addEventListener('click', () => {
-                    updateStatus("Requesting contact info...");
-                    requestButton.disabled = true; // Disable button while request is pending
+                goToChatButton.addEventListener('click', () => {
+                    updateStatus("Opening chat with @" + BOT_USERNAME + "...");
+                    // Note: We don't disable the button here, as the user leaves the Web App
+                    // The Web App will likely close or go to the background.
 
-                    // Call the requestContact API
-                    WebApp.requestContact((requestSent, eventData) => {
-                        requestButton.disabled = false; // Re-enable button after response
+                    // Use openTelegramLink to go to the bot's chat
+                    WebApp.openTelegramLink('https://t.me/' + BOT_USERNAME);
 
-                        console.log("requestContact response:", { requestSent, eventData });
+                    // You might want to close the web app after this, or keep it open.
+                    // WebApp.close(); // Uncomment this line if you want to close the Web App
 
-                        if (requestSent) {
-                            // The SDK handles the internal polling. If requestSent is true,
-                            // it means the request was sent to the Telegram client.
-                            // If the user grants access, the callback is re-triggered with
-                            // the phone number in eventData.responseUnsafe.
-                            // If the user denies after the popup, status will reflect that.
-
-                            if (eventData && eventData.responseUnsafe && eventData.responseUnsafe.phone_number) {
-                                updateStatus("Contact Granted! Phone Number: " + eventData.responseUnsafe.phone_number);
-                            } else if (eventData && eventData.status) {
-                                // Handle cases like 'cancelled' or 'denied' after the popup
-                                updateStatus("Request Result: " + eventData.status);
-                            } else {
-                                updateStatus("Request Sent, but unknown response.");
-                            }
-
-                        } else {
-                            // requestSent is false, meaning the initial call failed or was cancelled.
-                            // This could happen if the user closes the Web App before responding,
-                            // or if there's an internal error.
-                            if (eventData && eventData.status) {
-                                updateStatus("Request Failed or Cancelled: " + eventData.status);
-                            } else {
-                                updateStatus("Request Failed or Cancelled (Unknown reason).");
-                            }
-                        }
-                    });
                 });
             }
 
-
         } else {
             updateStatus("Telegram Web App script not loaded or not running in a Telegram client environment.");
-            requestButton.disabled = true; // Disable button if SDK is not available
+            goToChatButton.disabled = true; // Disable button if SDK is not available
         }
     });
-
 
 </script>
 
