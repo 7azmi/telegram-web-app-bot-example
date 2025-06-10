@@ -1,104 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Welcome</title>
-    <!-- Link to our new CSS files -->
-    <link rel="stylesheet" href="theme.css">
-    <link rel="stylesheet" href="styles.css">
-    <!-- The core Telegram Web App script -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debt Tracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"],
+        input[type="text"],
+        select { /* Added select */
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--tg-theme-border-color);
+            border-radius: 5px;
+            background-color: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            box-sizing: border-box; /* Include padding in width */
+        }
+        input::placeholder {
+            color: var(--tg-theme-hint-color);
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:disabled {
+            background-color: var(--tg-theme-hint-color);
+            cursor: not-allowed;
+        }
+        .person-selection {
+            margin-bottom: 15px;
+            border: 1px solid var(--tg-theme-border-color);
+            padding: 15px;
+            border-radius: 5px;
+            background-color: var(--tg-theme-secondary-bg-color);
+        }
+        .selection-type {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .explanation {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: var(--tg-theme-hint-color);
+        }
+        a {
+            color: var(--tg-theme-link-color); /* Style links */
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Welcome, <span id="user-name">Guest</span>!</h1>
-    <p>Please select your language.</p>
+<h1>Record Debt</h1>
 
-    <div class="language-selector">
-        <!-- Language codes (en, es, de) are used in IDs for easy JS selection -->
-        <button class="lang-btn" id="lang-en">English</button>
-        <button class="lang-btn" id="lang-es">Español</button>
-        <button class="lang-btn" id="lang-de">Deutsch</button>
+<form id="debtForm">
+    <div>
+        <label for="amount">Amount:</label>
+        <input type="number" id="amount" step="0.01" required placeholder="e.g., 50.50">
     </div>
 
-    <div class="user-data">
-        <h2>Developer Info (Placeholders)</h2>
-        <p>User ID: <code id="user-id-placeholder">Not available</code></p>
-        <p>First Name: <code id="user-fname-placeholder">Not available</code></p>
-        <p>Language Code: <code id="user-lang-placeholder">Not available</code></p>
+    <div class="person-selection">
+        <div class="selection-type">Who is this debt with?</div>
+
+        <label for="knownPersonSelect">Select from known:</label>
+        <select id="knownPersonSelect">
+            <option value="">-- Select a person --</option>
+            <!-- Options will be loaded by script.js -->
+        </select>
+
+        <p style="text-align: center; margin: 10px 0; font-size: 0.9em;">OR</p>
+
+        <label for="manualPersonInput">Enter manually:</label>
+        <input type="text" id="manualPersonInput" placeholder="e.g., Alice, @alice_tg, 123-456-7890">
     </div>
-</div>
 
-<script>
-    // Wait for the DOM to be fully loaded
-    document.addEventListener('DOMContentLoaded', () => {
-        const tg = window.Telegram.WebApp;
+    <div>
+        <label for="description">Description:</label>
+        <input type="text" id="description" placeholder="e.g., Lunch, Money lent">
+    </div>
 
-        // --- 1. Basic Setup and Initialization ---
-        tg.ready(); // Inform Telegram the web app is ready
-        tg.expand(); // Expand the web app to full height
+    <button type="submit" id="submitBtn">Record Debt</button>
 
-        // --- 2. Get User Data and Populate Placeholders ---
-        const user = tg.initDataUnsafe?.user;
+    <div id="personLinkContainer" style="margin-top: 15px;">
+        <!-- Link to person's chat will appear here if a known Telegram user is selected -->
+    </div>
+</form>
 
-        if (user) {
-            // Populate the welcome message and developer info
-            document.getElementById('user-name').textContent = user.first_name || 'User';
-            document.getElementById('user-id-placeholder').textContent = user.id;
-            document.getElementById('user-fname-placeholder').textContent = user.first_name;
-            document.getElementById('user-lang-placeholder').textContent = user.language_code;
+<p class="explanation">
+    Enter a positive amount if you are owed, negative if you owe someone.<br>
+    Select a person from the list (if available) or type manually.
+</p>
 
-            // Automatically select the language based on user's Telegram settings
-            const userLang = user.language_code.split('-')[0]; // Use 'en' from 'en-US'
-            const preselectedButton = document.getElementById(`lang-${userLang}`);
-            if (preselectedButton) {
-                preselectedButton.classList.add('active');
-            }
-        }
+<script src="script.js"></script>
 
-        // --- 3. Handle Language Selection ---
-        const langButtons = document.querySelectorAll('.lang-btn');
-        langButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Remove active class from all buttons
-                langButtons.forEach(btn => btn.classList.remove('active'));
-                // Add active class to the clicked button
-                button.classList.add('active');
-                // Enable and update the main button
-                tg.MainButton.setText(`Confirm ${button.textContent}`);
-                tg.MainButton.show();
-            });
-        });
-
-        // --- 4. Configure and Handle Main Button Click ---
-        tg.MainButton.onClick(() => {
-            const activeButton = document.querySelector('.lang-btn.active');
-            if (activeButton) {
-                const selectedLang = activeButton.id.replace('lang-', ''); // e.g., 'en'
-
-                // Create a data object to send back to your bot
-                const dataToSend = {
-                    userId: user ? user.id : null,
-                    selectedLanguage: selectedLang
-                };
-
-                // Send the data to the bot
-                tg.sendData(JSON.stringify(dataToSend));
-
-                // Optionally, close the web app after sending data
-                tg.close();
-            }
-        });
-
-        // Show main button only if a language is already pre-selected
-        if (document.querySelector('.lang-btn.active')) {
-            const activeButton = document.querySelector('.lang-btn.active');
-            tg.MainButton.setText(`Confirm ${activeButton.textContent}`);
-            tg.MainButton.show();
-        }
-    });
-</script>
 </body>
 </html>
